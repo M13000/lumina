@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { createChart, CandlestickSeries } from "lightweight-charts";
-import type { CandlestickData } from "lightweight-charts";
+import type { CandlestickData, UTCTimestamp } from "lightweight-charts";
 import { useMarket } from "../hooks/useMarket";
 
 export default function TradingChart() {
@@ -26,8 +26,6 @@ export default function TradingChart() {
 
     const series = chart.addSeries(CandlestickSeries);
 
-    let lastCandle: CandlestickData | null = null;
-
     const loadData = async () => {
       try {
         const res = await fetch(
@@ -37,17 +35,14 @@ export default function TradingChart() {
         const data = await res.json();
 
         const candles: CandlestickData[] = data.map((d: any) => ({
-          time: Math.floor(d[0] / 1000),
+          time: Math.floor(d[0] / 1000) as UTCTimestamp,
           open: Number(d[1]),
           high: Number(d[2]),
           low: Number(d[3]),
           close: Number(d[4]),
         }));
 
-        lastCandle = candles[candles.length - 1];
-
         series.setData(candles);
-
         chart.timeScale().fitContent();
       } catch (err) {
         console.error("Erro REST Binance:", err);
@@ -65,7 +60,7 @@ export default function TradingChart() {
       const k = msg.k;
 
       const candle: CandlestickData = {
-        time: Math.floor(k.t / 1000),
+        time: Math.floor(k.t / 1000) as UTCTimestamp,
         open: Number(k.o),
         high: Number(k.h),
         low: Number(k.l),
@@ -83,7 +78,6 @@ export default function TradingChart() {
 
   return (
     <div style={{ width: "100%" }}>
-      {/* MARKET SELECTOR */}
       <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
         {["BTCUSDT", "ETHUSDT", "SOLUSDT"].map((m) => (
           <button
@@ -103,7 +97,6 @@ export default function TradingChart() {
         ))}
       </div>
 
-      {/* CHART */}
       <div
         ref={containerRef}
         style={{
